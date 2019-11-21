@@ -339,7 +339,6 @@ CloudFormation do
       HostedZoneConfig ({
         Comment: FnSub("Hosted Zone for ${EnvironmentName}")
       })
-      HostedZoneTags tags
     }
     
     Output(:HostedZone) {
