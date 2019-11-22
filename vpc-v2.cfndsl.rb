@@ -2,12 +2,11 @@ require 'netaddr'
 
 CloudFormation do
   
-  tags, vpc_tags, route_tables = Array.new(3) { [] }
+  vpc_tags, route_tables = Array.new(2) { [] }
   
-  tags.push({ Key: 'Environment', Value: Ref(:EnvironmentName) })
-  tags.push({ Key: 'EnvironmentType', Value: Ref(:EnvironmentType) })
-
   vpc_tags.push({ Key: 'Name', Value: FnSub("${EnvironmentName}-vpc") })
+  vpc_tags.push({ Key: 'Environment', Value: Ref(:EnvironmentName) })
+  vpc_tags.push({ Key: 'EnvironmentType', Value: Ref(:EnvironmentType) })
   vpc_tags.push(*tags.map {|k,v| {Key: k, Value: FnSub(v)}}).uniq { |h| h[:Key] } if defined? tags
   
   net = NetAddr::IPv4Net.parse(vpc_cidr)
@@ -76,7 +75,7 @@ CloudFormation do
     
     cidrs.each_with_index do |cidr,index|
       rule_number = rule['number'] + index
-      direction = (rule.has_key?('egress') && rule['egress']) ? 'Outbound' : 'Inbound'
+      direction = (rule.has_key?('egress') && rule['egress']) ? 'Inbound' : 'Outbound'
       
       EC2_NetworkAclEntry("NaclRule#{direction}#{rule['acl'].capitalize}#{rule_number}") {
         NetworkAclId Ref("NetworkAcl#{rule['acl'].capitalize}")
@@ -340,7 +339,6 @@ CloudFormation do
       HostedZoneConfig ({
         Comment: FnSub("Hosted Zone for ${EnvironmentName}")
       })
-      HostedZoneTags tags
     }
     
     Output(:HostedZone) {
