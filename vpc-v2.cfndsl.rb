@@ -137,10 +137,11 @@ CloudFormation do
   # NAT Resource and conditions
   ##
   
-  Condition(:CreateNatGatewayEIP, FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""))
+  Condition(:CreateNatGatewayEIP, FnAnd([FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""),FnNot(Condition(:NatDisabled))]))
   Condition(:SpotEnabled, FnEquals(Ref(:NatInstancesSpot), 'true'))
   Condition(:ManagedNat, FnEquals(Ref(:NatType), 'managed'))
   Condition(:NatInstance, FnEquals(Ref(:NatType), 'instances'))
+  Condition(:NatDisabled, FnEquals(Ref(:NatType), 'disabled'))
       
   EC2_SecurityGroup(:NatInstanceSecurityGroup) { 
     Condition(:NatInstance)
