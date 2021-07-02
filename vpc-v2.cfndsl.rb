@@ -66,14 +66,16 @@ CloudFormation do
     }
   end
   
-  EC2_InternetGateway(:InternetGateway) {
-    Tags vpc_tags
-  }
+  if external_parameters[:enable_internet_gateway]
+    EC2_InternetGateway(:InternetGateway) {
+      Tags vpc_tags
+    }
   
-  EC2_VPCGatewayAttachment(:AttachGateway){
-    VpcId Ref(:VPC)
-    InternetGatewayId Ref(:InternetGateway)
-  }
+    EC2_VPCGatewayAttachment(:AttachGateway){
+      VpcId Ref(:VPC)
+      InternetGatewayId Ref(:InternetGateway)
+    }
+  end
   
   EC2_RouteTable(:RouteTablePublic) {
     VpcId Ref(:VPC)
@@ -89,13 +91,14 @@ CloudFormation do
     VpcId Ref(:VPC)
     Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-private") }].push(*vpc_tags).uniq! { |t| t[:Key] }
   }
-  
-  EC2_Route(:PublicRouteOutToInternet) {
-    DependsOn ['AttachGateway']
-    RouteTableId Ref(:RouteTablePublic)
-    DestinationCidrBlock '0.0.0.0/0'
-    GatewayId Ref(:InternetGateway)
-  }
+  if external_parameters[:enable_internet_gateway]
+    EC2_Route(:PublicRouteOutToInternet) {
+      DependsOn ['AttachGateway']
+      RouteTableId Ref(:RouteTablePublic)
+      DestinationCidrBlock '0.0.0.0/0'
+      GatewayId Ref(:InternetGateway)
+    }
+  end
   
   ###
   # Network Access Control Lists
@@ -281,7 +284,9 @@ CloudFormation do
     
     EC2_EIP("NatIPAddress#{az}") {
       Condition "CreateNatGatewayEIP#{az}"
-      DependsOn ["AttachGateway"]
+      if external_parameters[:enable_internet_gateway]
+        DependsOn ["AttachGateway"]
+      end
       Domain 'vpc'
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-nat-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
