@@ -461,6 +461,16 @@ CloudFormation do
     }
     
   end
+
+  Output("PrivateRouteTables") {
+    Value(FnJoin(',', route_tables))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PrivateRouteTables")
+  } unless route_tables.empty?
+
+  Output("PublicRouteTable") {
+    Value(Ref(:RouteTablePublic))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PublicRouteTable")
+  }
   
   ##
   # Subnets
